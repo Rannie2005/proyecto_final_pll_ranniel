@@ -1,0 +1,175 @@
+﻿@model IEnumerable<EstudioGrabacion.Models.Sesion>
+@{
+    ViewData["Title"] = "Sesiones de Grabación";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>📋 Sesiones Programadas</h2>
+        <a asp-action="Reservar" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Nueva Reserva
+        </a>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> No hay sesiones programadas.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Cliente</th>
+                        <th>Fecha/Hora</th>
+                        <th>Duración</th>
+                        <th>Ingeniero</th>
+                        <th>Servicio</th>
+                        <th>Costo</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var sesion in Model)
+                    {
+                        <tr>
+                            <td>@sesion.Id</td>
+                            <td>
+                                <strong>@sesion.NombreCliente</strong><br>
+                                <small>@sesion.TelefonoCliente</small>
+                            </td>
+                            <td>
+                                @sesion.FechaHoraInicio.ToString("dd/MM/yyyy")<br>
+                                <small>@sesion.FechaHoraInicio.ToString("hh:mm tt") - @sesion.FechaHoraFin.ToString("hh:mm tt")</small>
+                            </td>
+                            <td>@((sesion.FechaHoraFin - sesion.FechaHoraInicio).TotalHours) horas</td>
+                            <td>@sesion.Ingeniero?.Nombre</td>
+                            <td>@sesion.Servicio?.Nombre</td>
+                            <td>$@sesion.CostoTotal.ToString("N2")</td>
+                            <td>
+                                <span class="badge @GetEstadoBadgeClass(sesion.Estado)">
+                                    @sesion.Estado
+                                </span>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-info" onclick="verDetalles(@sesion.Id)">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-warning" onclick="editarSesion(@sesion.Id)">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="cancelarSesion(@sesion.Id)">
+                                    <i class="bi bi-x-circle"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<!-- Modal para detalles -->
+<div class="modal fade" id="detallesModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detalles de la Sesión</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="detallesContent">
+                <!-- Los detalles se cargarán aquí -->
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function verDetalles(id) {
+            $.ajax({
+                url: '/api/Sesiones/' + id,
+                method: 'GET',
+                success: function(data) {
+                    var contenido = `
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Información del Cliente:</h6>
+                                <p><strong>Nombre:</strong> ${data.nombreCliente}</p>
+                                <p><strong>Teléfono:</strong> ${data.telefonoCliente}</p>
+                                <p><strong>Email:</strong> ${data.emailCliente}</p>
+                                ${data.direccionCliente ? `<p><strong>Dirección:</strong> ${data.direccionCliente}</p>` : ''}
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Detalles de la Sesión:</h6>
+                                <p><strong>Fecha:</strong> ${new Date(data.fechaHoraInicio).toLocaleDateString()}</p>
+                                <p><strong>Hora:</strong> ${new Date(data.fechaHoraInicio).toLocaleTimeString()} - ${new Date(data.fechaHoraFin).toLocaleTimeString()}</p>
+                                <p><strong>Ingeniero:</strong> ${data.ingeniero ? data.ingeniero.nombre : 'N/A'}</p>
+                                <p><strong>Servicio:</strong> ${data.servicio ? data.servicio.nombre : 'N/A'}</p>
+                                <p><strong>Costo Total:</strong> $${data.costoTotal.toFixed(2)}</p>
+                                <p><strong>Estado:</strong> ${data.estado}</p>
+                            </div>
+                        </div>
+                        ${data.notas ? `<hr><p><strong>Notas:</strong><br>${data.notas}</p>` : ''}
+                    `;
+                    $('#detallesContent').html(contenido);
+                    var modal = new bootstrap.Modal(document.getElementById('detallesModal'));
+                    modal.show();
+                }
+            });
+        }
+
+        function editarSesion(id) {
+            // Aquí puedes implementar la edición
+            alert('Funcionalidad de edición en desarrollo. Sesión ID: ' + id);
+        }
+
+        function cancelarSesion(id) {
+            if (confirm('¿Está seguro de cancelar esta sesión?')) {
+                $.ajax({
+                    url: '/api/Sesiones/' + id,
+                    method: 'DELETE',
+                    success: function() {
+                        location.reload();
+                    },
+                    error: function() {
+                        alert('Error al cancelar la sesión');
+                    }
+                });
+            }
+        }
+
+        function cambiarEstado(id, estado) {
+            $.ajax({
+                url: '/api/Sesiones/' + id + '/estado',
+                method: 'PATCH',
+                contentType: 'application/json',
+                data: JSON.stringify(estado),
+                success: function() {
+                    location.reload();
+                }
+            });
+        }
+    </script>
+}
+
+@functions {
+    string GetEstadoBadgeClass(string estado)
+    {
+        return estado switch
+        {
+            "Pendiente" => "bg-warning",
+            "Confirmada" => "bg-success",
+            "En progreso" => "bg-info",
+            "Completada" => "bg-primary",
+            "Cancelada" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+}

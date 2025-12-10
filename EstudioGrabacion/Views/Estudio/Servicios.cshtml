@@ -1,0 +1,250 @@
+﻿@{
+    ViewData["Title"] = "Servicios del Estudio";
+}
+
+<div class="container mt-4">
+    <h2>Servicios Disponibles</h2>
+
+    <div class="mb-3">
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalServicio">
+            <i class="bi bi-plus-circle"></i> Agregar Nuevo Servicio
+        </button>
+    </div>
+
+    <div class="row" id="servicios-container">
+        <!-- Los servicios se cargarán aquí con JavaScript -->
+        <div class="col-12 text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+            <p class="text-muted mt-2">Cargando servicios...</p>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para agregar/editar servicio -->
+<div class="modal fade" id="modalServicio" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Nuevo Servicio</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formServicio">
+                    <div class="mb-3">
+                        <label class="form-label">Nombre del Servicio</label>
+                        <input type="text" class="form-control" id="nombre" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Descripción</label>
+                        <textarea class="form-control" id="descripcion" rows="3" required></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Precio ($)</label>
+                            <input type="number" class="form-control" id="precio" step="0.01" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Duración (horas)</label>
+                            <input type="number" class="form-control" id="duracion" min="1" required>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="guardarServicio()">Guardar Servicio</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            cargarServicios();
+        });
+
+        function cargarServicios() {
+            $.ajax({
+                url: '/api/Servicios',
+                method: 'GET',
+                success: function(data) {
+                    mostrarServicios(data);
+                },
+                error: function() {
+                    $('#servicios-container').html('<div class="col-12"><p class="text-danger">Error al cargar los servicios.</p></div>');
+                }
+            });
+        }
+
+        function mostrarServicios(servicios) {
+            var container = $('#servicios-container');
+            container.empty();
+
+            if (servicios.length === 0) {
+                container.html('<div class="col-12"><p class="text-muted">No hay servicios registrados.</p></div>');
+                return;
+            }
+
+            servicios.forEach(function(servicio) {
+                var card = `
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="card-title mb-0">${servicio.nombre}</h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text">${servicio.descripcion}</p>
+                                <div class="mt-3">
+                                    <p><strong>Duración:</strong> ${servicio.duracionHoras} horas</p>
+                                    <p><strong>Precio:</strong> $${servicio.precio}</p>
+                                    <p><strong>Costo por hora:</strong> $${(servicio.precio / servicio.duracionHoras).toFixed(2)}/hora</p>
+                                </div>
+                            </div>
+                            <div class="card-footer bg-transparent">
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-sm btn-warning" onclick="editarServicio(${servicio.id})">Editar</button>
+                                    <button class="btn btn-sm btn-danger" onclick="eliminarServicio(${servicio.id})">Eliminar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.append(card);
+            });
+        }
+
+        function guardarServicio() {
+            var servicio = {
+                nombre: $('#nombre').val(),
+                descripcion: $('#descripcion').val(),
+                precio: parseFloat($('#precio').val()),
+                duracionHoras: parseInt($('#duracion').val())
+            };
+
+            $.ajax({
+                url: '/api/Servicios',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(servicio),
+                success: function() {
+                    $('#modalServicio').modal('hide');
+                    $('#formServicio')[0].reset();
+                    cargarServicios();
+                    mostrarMensaje('success', 'Servicio guardado correctamente');
+                },
+                error: function() {
+                    mostrarMensaje('error', 'Error al guardar el servicio');
+                }
+            });
+        }
+
+                function editarServicio(id) {
+            $.ajax({
+                url: `/api/Servicios/${id}`,
+                method: 'GET',
+                success: function(servicio) {
+                    // Llenar el modal con los datos del servicio
+                    $('#modalServicio .modal-title').text('Editar Servicio');
+                    $('#nombre').val(servicio.nombre);
+                    $('#descripcion').val(servicio.descripcion);
+                    $('#precio').val(servicio.precio);
+                    $('#duracion').val(servicio.duracionHoras);
+                    $('#categoria').val(servicio.categoria);
+
+                    // Agregar un campo hidden para el ID
+                    if (!$('#servicioId').length) {
+                        $('#formServicio').prepend('<input type="hidden" id="servicioId">');
+                    }
+                    $('#servicioId').val(servicio.id);
+
+                    $('#modalServicio').modal('show');
+                },
+                error: function() {
+                    mostrarMensaje('error', 'Error al cargar el servicio');
+                }
+            });
+        }
+
+        function eliminarServicio(id) {
+            if (confirm('¿Está seguro de eliminar este servicio?')) {
+                $.ajax({
+                    url: `/api/Servicios/${id}`,
+                    method: 'DELETE',
+                    success: function() {
+                        mostrarMensaje('success', 'Servicio eliminado correctamente');
+                        cargarServicios();
+                    },
+                    error: function(xhr) {
+                        var errorMsg = 'Error al eliminar el servicio';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMsg = xhr.responseJSON.message;
+                        }
+                        mostrarMensaje('error', errorMsg);
+                    }
+                });
+            }
+        }
+
+        // Modificar la función guardarServicio para manejar edición también
+        function guardarServicio() {
+            var servicioId = $('#servicioId').val();
+            var servicio = {
+                nombre: $('#nombre').val(),
+                descripcion: $('#descripcion').val(),
+                precio: parseFloat($('#precio').val()),
+                duracionHoras: parseInt($('#duracion').val()),
+                categoria: $('#categoria').val() || 'General',
+                activo: true
+            };
+
+            var metodo = servicioId ? 'PUT' : 'POST';
+            var url = servicioId ? `/api/Servicios/${servicioId}` : '/api/Servicios';
+
+            // Agregar ID si es edición
+            if (servicioId) {
+                servicio.id = parseInt(servicioId);
+            }
+
+            $.ajax({
+                url: url,
+                method: metodo,
+                contentType: 'application/json',
+                data: JSON.stringify(servicio),
+                success: function() {
+                    $('#modalServicio').modal('hide');
+                    $('#formServicio')[0].reset();
+                    $('#servicioId').remove();
+                    mostrarMensaje('success', `Servicio ${servicioId ? 'actualizado' : 'creado'} correctamente`);
+                    cargarServicios();
+                },
+                error: function(xhr) {
+                    var errorMsg = 'Error al guardar el servicio';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMsg = xhr.responseJSON.message;
+                    }
+                    mostrarMensaje('error', errorMsg);
+                }
+            });
+        }
+
+        // Agregar al modal de servicio un campo para categoría
+        // Modifica el HTML del modal para incluir:
+        /*
+        <div class="mb-3">
+            <label class="form-label">Categoría</label>
+            <input type="text" class="form-control" id="categoria" placeholder="Ej: Grabación, Post-Producción">
+        </div>
+        */
+
+        function mostrarMensaje(tipo, texto) {
+            var alerta = `<div class="alert alert-${tipo} alert-dismissible fade show" role="alert">
+                            ${texto}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                          </div>`;
+            $('.container').prepend(alerta);
+        }
+    </script>
+}

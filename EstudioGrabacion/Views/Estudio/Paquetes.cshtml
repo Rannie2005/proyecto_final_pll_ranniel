@@ -1,0 +1,364 @@
+﻿@{
+    ViewData["Title"] = "Paquetes de Servicios";
+}
+
+<div class="container mt-4">
+    <h2>Paquetes de Servicios</h2>
+
+    <div class="mb-3">
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalPaquete">
+            <i class="bi bi-box-seam"></i> Crear Nuevo Paquete
+        </button>
+        <div class="alert alert-info mt-3">
+            <i class="bi bi-info-circle"></i> Los paquetes son combinaciones de servicios con descuento.
+        </div>
+    </div>
+
+    <div class="row" id="paquetes-container">
+        <!-- Los paquetes se cargarán aquí con JavaScript -->
+        <div class="col-12 text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+            <p class="text-muted mt-2">Cargando paquetes...</p>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para crear paquete -->
+<div class="modal fade" id="modalPaquete" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Crear Nuevo Paquete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formPaquete">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nombre del Paquete</label>
+                            <input type="text" class="form-control" id="nombre" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Precio Total ($)</label>
+                            <input type="number" class="form-control" id="precioTotal" step="0.01" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Descripción</label>
+                        <textarea class="form-control" id="descripcion" rows="2" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Duración Total (horas)</label>
+                        <input type="number" class="form-control" id="duracionTotal" min="1" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Seleccionar Servicios</label>
+                        <div id="servicios-checklist">
+                            <p class="text-muted">Cargando servicios...</p>
+                        </div>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="activo" checked>
+                        <label class="form-check-label" for="activo">
+                            Paquete activo (disponible para reservar)
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="guardarPaquete()">Crear Paquete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var todosServicios = [];
+
+        $(document).ready(function() {
+            cargarPaquetes();
+            cargarServiciosParaPaquete();
+        });
+
+        function cargarPaquetes() {
+            $.ajax({
+                url: '/api/Paquetes',
+                method: 'GET',
+                success: function(data) {
+                    mostrarPaquetes(data);
+                },
+                error: function() {
+                    $('#paquetes-container').html('<div class="col-12"><p class="text-danger">Error al cargar los paquetes.</p></div>');
+                }
+            });
+        }
+
+        function cargarServiciosParaPaquete() {
+            $.ajax({
+                url: '/api/Servicios',
+                method: 'GET',
+                success: function(data) {
+                    todosServicios = data;
+                    mostrarChecklistServicios();
+                }
+            });
+        }
+
+        function mostrarChecklistServicios() {
+            var container = $('#servicios-checklist');
+            container.empty();
+
+            if (todosServicios.length === 0) {
+                container.html('<p class="text-muted">No hay servicios disponibles.</p>');
+                return;
+            }
+
+            todosServicios.forEach(function(servicio, index) {
+                var item = `
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="${servicio.id}" id="servicio-${index}">
+                        <label class="form-check-label" for="servicio-${index}">
+                            ${servicio.nombre} - $${servicio.precio} (${servicio.duracionHoras} horas)
+                        </label>
+                    </div>
+                `;
+                container.append(item);
+            });
+        }
+
+                function editarPaquete(id) {
+            $.ajax({
+                url: `/api/Paquetes/${id}`,
+                method: 'GET',
+                success: function(paquete) {
+                    $('#modalPaquete .modal-title').text('Editar Paquete');
+                    $('#nombre').val(paquete.nombre);
+                    $('#descripcion').val(paquete.descripcion);
+                    $('#precioTotal').val(paquete.precioTotal);
+                    $('#duracionTotal').val(paquete.duracionTotalHoras);
+                    $('#activo').prop('checked', paquete.activo);
+
+                    // Marcar servicios seleccionados
+                    if (paquete.servicioIds && paquete.servicioIds.length > 0) {
+                        $('#servicios-checklist input[type="checkbox"]').each(function() {
+                            var servicioId = parseInt($(this).val());
+                            $(this).prop('checked', paquete.servicioIds.includes(servicioId));
+                        });
+                    }
+
+                    // Agregar campo hidden para el ID
+                    if (!$('#paqueteId').length) {
+                        $('#formPaquete').prepend('<input type="hidden" id="paqueteId">');
+                    }
+                    $('#paqueteId').val(paquete.id);
+
+                    $('#modalPaquete').modal('show');
+                },
+                error: function() {
+                    mostrarMensaje('error', 'Error al cargar el paquete');
+                }
+            });
+        }
+
+        function eliminarPaquete(id) {
+            if (confirm('¿Está seguro de eliminar este paquete?')) {
+                $.ajax({
+                    url: `/api/Paquetes/${id}`,
+                    method: 'DELETE',
+                    success: function() {
+                        mostrarMensaje('success', 'Paquete eliminado correctamente');
+                        cargarPaquetes();
+                    },
+                    error: function(xhr) {
+                        var errorMsg = 'Error al eliminar el paquete';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMsg = xhr.responseJSON.message;
+                        }
+                        mostrarMensaje('error', errorMsg);
+                    }
+                });
+            }
+        }
+
+        // Modificar guardarPaquete para manejar edición
+        function guardarPaquete() {
+            var paqueteId = $('#paqueteId').val();
+            var serviciosSeleccionados = [];
+            $('#servicios-checklist input[type="checkbox"]:checked').each(function() {
+                serviciosSeleccionados.push(parseInt($(this).val()));
+            });
+
+            var paquete = {
+                nombre: $('#nombre').val(),
+                descripcion: $('#descripcion').val(),
+                precioTotal: parseFloat($('#precioTotal').val()),
+                duracionTotalHoras: parseInt($('#duracionTotal').val()),
+                activo: $('#activo').is(':checked'),
+                servicioIds: serviciosSeleccionados
+            };
+
+            var metodo = paqueteId ? 'PUT' : 'POST';
+            var url = paqueteId ? `/api/Paquetes/${paqueteId}` : '/api/Paquetes';
+
+            // Agregar ID si es edición
+            if (paqueteId) {
+                paquete.id = parseInt(paqueteId);
+            }
+
+            $.ajax({
+                url: url,
+                method: metodo,
+                contentType: 'application/json',
+                data: JSON.stringify(paquete),
+                success: function() {
+                    $('#modalPaquete').modal('hide');
+                    $('#formPaquete')[0].reset();
+                    $('#paqueteId').remove();
+                    mostrarMensaje('success', `Paquete ${paqueteId ? 'actualizado' : 'creado'} correctamente`);
+                    cargarPaquetes();
+                },
+                error: function(xhr) {
+                    var errorMsg = 'Error al guardar el paquete';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMsg = xhr.responseJSON.message;
+                    }
+                    mostrarMensaje('error', errorMsg);
+                }
+            });
+        }
+
+        function mostrarPaquetes(paquetes) {
+            var container = $('#paquetes-container');
+            container.empty();
+
+            if (paquetes.length === 0) {
+                container.html(`
+                    <div class="col-12">
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i> No hay paquetes creados aún.
+                            <p class="mb-0 mt-2">Crea tu primer paquete combinando servicios.</p>
+                        </div>
+                    </div>
+                `);
+                return;
+            }
+
+            paquetes.forEach(function(paquete) {
+                var serviciosList = '';
+                var duracionTotal = 0;
+                var precioIndividual = 0;
+
+                if (paquete.servicios && paquete.servicios.length > 0) {
+                    paquete.servicios.forEach(function(servicio) {
+                        serviciosList += `<li>${servicio.nombre} - $${servicio.precio}</li>`;
+                        duracionTotal += servicio.duracionHoras;
+                        precioIndividual += servicio.precio;
+                    });
+                }
+
+                var ahorro = precioIndividual - paquete.precioTotal;
+                var porcentajeAhorro = precioIndividual > 0 ? ((ahorro / precioIndividual) * 100).toFixed(0) : 0;
+
+                var card = `
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100 border-primary">
+                            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0">${paquete.nombre}</h5>
+                                <span class="badge ${paquete.activo ? 'bg-success' : 'bg-secondary'}">
+                                    ${paquete.activo ? 'Activo' : 'Inactivo'}
+                                </span>
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text">${paquete.descripcion}</p>
+
+                                <div class="mb-3">
+                                    <h6>Servicios incluidos:</h6>
+                                    <ul class="mb-0">
+                                        ${serviciosList || '<li class="text-muted">No hay servicios asignados</li>'}
+                                    </ul>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p><strong>Duración:</strong> ${paquete.duracionTotalHoras} horas</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p><strong>Precio paquete:</strong> $${paquete.precioTotal}</p>
+                                    </div>
+                                </div>
+
+                                ${ahorro > 0 ? `
+                                <div class="alert alert-success mt-2">
+                                    <i class="bi bi-tag"></i> <strong>Ahorras $${ahorro}</strong>
+                                    (${porcentajeAhorro}% de descuento)
+                                    <br>
+                                    <small>Precio individual: $${precioIndividual}</small>
+                                </div>
+                                ` : ''}
+                            </div>
+                            <div class="card-footer bg-transparent">
+                                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                    <button class="btn btn-sm btn-warning me-md-2" onclick="editarPaquete(${paquete.id})">
+                                        <i class="bi bi-pencil"></i> Editar
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" onclick="eliminarPaquete(${paquete.id})">
+                                        <i class="bi bi-trash"></i> Eliminar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.append(card);
+            });
+        }
+
+        function guardarPaquete() {
+            var serviciosSeleccionados = [];
+            $('#servicios-checklist input[type="checkbox"]:checked').each(function() {
+                serviciosSeleccionados.push(parseInt($(this).val()));
+            });
+
+            var paquete = {
+                nombre: $('#nombre').val(),
+                descripcion: $('#descripcion').val(),
+                precioTotal: parseFloat($('#precioTotal').val()),
+                duracionTotalHoras: parseInt($('#duracionTotal').val()),
+                activo: $('#activo').is(':checked'),
+                servicioIds: serviciosSeleccionados
+            };
+
+            $.ajax({
+                url: '/api/Paquetes',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(paquete),
+                success: function() {
+                    $('#modalPaquete').modal('hide');
+                    $('#formPaquete')[0].reset();
+                    cargarPaquetes();
+                    mostrarMensaje('success', 'Paquete creado correctamente');
+                },
+                error: function() {
+                    mostrarMensaje('error', 'Error al crear el paquete');
+                }
+            });
+        }
+
+        function mostrarMensaje(tipo, texto) {
+            var alerta = `<div class="alert alert-${tipo} alert-dismissible fade show" role="alert">
+                            <i class="bi ${tipo === 'success' ? 'bi-check-circle' : 'bi-exclamation-circle'}"></i>
+                            ${texto}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                          </div>`;
+            $('.container').prepend(alerta);
+            setTimeout(() => $('.alert').alert('close'), 5000);
+        }
+    </script>
+}

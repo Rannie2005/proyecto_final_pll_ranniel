@@ -1,0 +1,411 @@
+﻿@{
+    ViewData["Title"] = "Ingenieros de Sonido";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-person-badge"></i> Ingenieros de Sonido</h2>
+        <button class="btn btn-primary" onclick="abrirModalIngeniero()">
+            <i class="bi bi-plus-circle"></i> Nuevo Ingeniero
+        </button>
+    </div>
+
+    <!-- Mensajes -->
+    <div id="mensajes-container"></div>
+
+    <!-- Tabla de ingenieros -->
+    <div class="card">
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0">Lista de Ingenieros</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="tabla-ingenieros">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Especialidad</th>
+                            <th>Tarifa/Hora</th>
+                            <th>Contacto</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Los datos se cargarán con JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            <div id="sin-ingenieros" class="text-center py-4" style="display: none;">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> No hay ingenieros registrados. ¡Crea el primero!
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para crear/editar ingeniero -->
+<div class="modal fade" id="modalIngeniero" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalIngenieroTitulo">Nuevo Ingeniero</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formIngeniero">
+                    <input type="hidden" id="ingenieroId">
+
+                    <div class="mb-3">
+                        <label class="form-label">Nombre Completo *</label>
+                        <input type="text" class="form-control" id="nombre" required
+                               placeholder="Ej: Carlos Martínez">
+                        <div class="invalid-feedback">El nombre es requerido</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Especialidad *</label>
+                        <input type="text" class="form-control" id="especialidad" required
+                               placeholder="Ej: Mezcla y Masterización">
+                        <div class="invalid-feedback">La especialidad es requerida</div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Tarifa por Hora ($) *</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="tarifaPorHora"
+                                       step="0.01" min="0" required placeholder="50.00">
+                            </div>
+                            <div class="invalid-feedback">La tarifa es requerida</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Estado</label>
+                            <select class="form-select" id="disponible">
+                                <option value="true">Disponible</option>
+                                <option value="false">No Disponible</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email"
+                               placeholder="ejemplo@estudio.com">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Teléfono</label>
+                        <input type="tel" class="form-control" id="telefono"
+                               placeholder="555-123-4567">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Descripción</label>
+                        <textarea class="form-control" id="descripcion" rows="3"
+                                  placeholder="Experiencia, equipos que maneja, etc."></textarea>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="activo" checked>
+                        <label class="form-check-label" for="activo">
+                            Ingeniero activo
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="guardarIngeniero()" id="btnGuardarIngeniero">
+                    <i class="bi bi-save"></i> Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación para eliminar -->
+<div class="modal fade" id="modalConfirmarEliminar" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="bi bi-exclamation-triangle"></i> Confirmar Eliminación</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de eliminar este ingeniero?</p>
+                <p class="text-danger"><small>Esta acción no se puede deshacer.</small></p>
+                <input type="hidden" id="ingenieroAEliminar">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" onclick="eliminarIngenieroConfirmado()">
+                    <i class="bi bi-trash"></i> Sí, Eliminar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            cargarIngenieros();
+
+            // Validación en tiempo real
+            $('#nombre, #especialidad, #tarifaPorHora').on('input', function() {
+                validarCampo($(this));
+            });
+        });
+
+        function cargarIngenieros() {
+            $.ajax({
+                url: '/api/Ingenieros',
+                method: 'GET',
+                beforeSend: function() {
+                    $('#tabla-ingenieros tbody').html(`
+                        <tr>
+                            <td colspan="6" class="text-center">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
+                                <p class="text-muted mt-2">Cargando ingenieros...</p>
+                            </td>
+                        </tr>
+                    `);
+                },
+                success: function(data) {
+                    if (data.length === 0) {
+                        $('#tabla-ingenieros tbody').empty();
+                        $('#tabla-ingenieros').hide();
+                        $('#sin-ingenieros').show();
+                        return;
+                    }
+
+                    $('#tabla-ingenieros').show();
+                    $('#sin-ingenieros').hide();
+
+                    var tbody = $('#tabla-ingenieros tbody');
+                    tbody.empty();
+
+                    data.forEach(function(ingeniero) {
+                        var fila = `
+                            <tr id="ingeniero-${ingeniero.id}">
+                                <td>
+                                    <strong>${ingeniero.nombre}</strong>
+                                    ${ingeniero.descripcion ? `<br><small class="text-muted">${ingeniero.descripcion.substring(0, 50)}...</small>` : ''}
+                                </td>
+                                <td>${ingeniero.especialidad}</td>
+                                <td>
+                                    <span class="badge bg-primary">$${ingeniero.tarifaPorHora}/hora</span>
+                                </td>
+                                <td>
+                                    ${ingeniero.email ? `<div><i class="bi bi-envelope"></i> ${ingeniero.email}</div>` : ''}
+                                    ${ingeniero.telefono ? `<div><i class="bi bi-telephone"></i> ${ingeniero.telefono}</div>` : ''}
+                                </td>
+                                <td>
+                                    ${ingeniero.disponible ?
+                                        '<span class="badge bg-success">Disponible</span>' :
+                                        '<span class="badge bg-secondary">No Disponible</span>'}
+                                    ${!ingeniero.activo ? '<br><span class="badge bg-danger mt-1">Inactivo</span>' : ''}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-outline-primary" onclick="editarIngeniero(${ingeniero.id})" title="Editar">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button class="btn btn-outline-danger" onclick="confirmarEliminarIngeniero(${ingeniero.id}, '${ingeniero.nombre}')" title="Eliminar">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                        tbody.append(fila);
+                    });
+                },
+                error: function() {
+                    mostrarMensaje('error', 'Error al cargar los ingenieros');
+                    $('#tabla-ingenieros tbody').html(`
+                        <tr>
+                            <td colspan="6" class="text-center text-danger">
+                                <i class="bi bi-exclamation-triangle"></i> Error al cargar los datos
+                            </td>
+                        </tr>
+                    `);
+                }
+            });
+        }
+
+        function abrirModalIngeniero() {
+            $('#modalIngenieroTitulo').text('Nuevo Ingeniero');
+            $('#formIngeniero')[0].reset();
+            $('#ingenieroId').val('');
+            $('#formIngeniero input').removeClass('is-invalid is-valid');
+            $('#modalIngeniero').modal('show');
+        }
+
+        function editarIngeniero(id) {
+            $.ajax({
+                url: `/api/Ingenieros/${id}`,
+                method: 'GET',
+                success: function(ingeniero) {
+                    $('#modalIngenieroTitulo').text('Editar Ingeniero');
+                    $('#ingenieroId').val(ingeniero.id);
+                    $('#nombre').val(ingeniero.nombre);
+                    $('#especialidad').val(ingeniero.especialidad);
+                    $('#tarifaPorHora').val(ingeniero.tarifaPorHora);
+                    $('#disponible').val(ingeniero.disponible.toString());
+                    $('#email').val(ingeniero.email || '');
+                    $('#telefono').val(ingeniero.telefono || '');
+                    $('#descripcion').val(ingeniero.descripcion || '');
+                    $('#activo').prop('checked', ingeniero.activo !== false);
+
+                    $('#formIngeniero input').removeClass('is-invalid is-valid');
+                    $('#modalIngeniero').modal('show');
+                },
+                error: function() {
+                    mostrarMensaje('error', 'Error al cargar el ingeniero');
+                }
+            });
+        }
+
+        function guardarIngeniero() {
+            // Validar formulario
+            if (!validarFormularioIngeniero()) {
+                return;
+            }
+
+            var ingeniero = {
+                id: $('#ingenieroId').val() || 0,
+                nombre: $('#nombre').val(),
+                especialidad: $('#especialidad').val(),
+                tarifaPorHora: parseFloat($('#tarifaPorHora').val()),
+                disponible: $('#disponible').val() === 'true',
+                email: $('#email').val() || null,
+                telefono: $('#telefono').val() || null,
+                descripcion: $('#descripcion').val() || null,
+                activo: $('#activo').is(':checked')
+            };
+
+            var metodo = ingeniero.id ? 'PUT' : 'POST';
+            var url = ingeniero.id ? `/api/Ingenieros/${ingeniero.id}` : '/api/Ingenieros';
+
+            $.ajax({
+                url: url,
+                method: metodo,
+                contentType: 'application/json',
+                data: JSON.stringify(ingeniero),
+                beforeSend: function() {
+                    $('#btnGuardarIngeniero').prop('disabled', true)
+                        .html('<span class="spinner-border spinner-border-sm" role="status"></span> Guardando...');
+                },
+                success: function() {
+                    $('#modalIngeniero').modal('hide');
+                    mostrarMensaje('success', `Ingeniero ${ingeniero.id ? 'actualizado' : 'creado'} correctamente`);
+                    cargarIngenieros();
+                },
+                error: function(xhr) {
+                    var errorMsg = 'Error al guardar el ingeniero';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMsg = xhr.responseJSON.message;
+                    }
+                    mostrarMensaje('error', errorMsg);
+                },
+                complete: function() {
+                    $('#btnGuardarIngeniero').prop('disabled', false)
+                        .html('<i class="bi bi-save"></i> Guardar');
+                }
+            });
+        }
+
+        function validarFormularioIngeniero() {
+            var valido = true;
+
+            // Validar campos requeridos
+            var camposRequeridos = ['#nombre', '#especialidad', '#tarifaPorHora'];
+            camposRequeridos.forEach(function(selector) {
+                if (!validarCampo($(selector))) {
+                    valido = false;
+                }
+            });
+
+            // Validar tarifa positiva
+            var tarifa = parseFloat($('#tarifaPorHora').val());
+            if (tarifa <= 0) {
+                $('#tarifaPorHora').addClass('is-invalid')
+                    .next('.invalid-feedback').text('La tarifa debe ser mayor a 0');
+                valido = false;
+            }
+
+            return valido;
+        }
+
+        function validarCampo(campo) {
+            if (campo.val().trim() === '') {
+                campo.addClass('is-invalid');
+                campo.removeClass('is-valid');
+                return false;
+            } else {
+                campo.removeClass('is-invalid');
+                campo.addClass('is-valid');
+                return true;
+            }
+        }
+
+        function confirmarEliminarIngeniero(id, nombre) {
+            $('#ingenieroAEliminar').val(id);
+            $('#modalConfirmarEliminar .modal-body p:first').text(`¿Estás seguro de eliminar al ingeniero "${nombre}"?`);
+            $('#modalConfirmarEliminar').modal('show');
+        }
+
+        function eliminarIngenieroConfirmado() {
+            var id = $('#ingenieroAEliminar').val();
+
+            $.ajax({
+                url: `/api/Ingenieros/${id}`,
+                method: 'DELETE',
+                beforeSend: function() {
+                    $('#modalConfirmarEliminar .btn-danger').prop('disabled', true)
+                        .html('<span class="spinner-border spinner-border-sm" role="status"></span> Eliminando...');
+                },
+                success: function() {
+                    $('#modalConfirmarEliminar').modal('hide');
+                    mostrarMensaje('success', 'Ingeniero eliminado correctamente');
+                    cargarIngenieros();
+                },
+                error: function(xhr) {
+                    var errorMsg = 'Error al eliminar el ingeniero';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMsg = xhr.responseJSON.message;
+                    }
+                    mostrarMensaje('error', errorMsg);
+                },
+                complete: function() {
+                    $('#modalConfirmarEliminar .btn-danger').prop('disabled', false)
+                        .html('<i class="bi bi-trash"></i> Sí, Eliminar');
+                }
+            });
+        }
+
+        function mostrarMensaje(tipo, texto) {
+            var icono = tipo === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill';
+            var alerta = `
+                <div class="alert alert-${tipo} alert-dismissible fade show" role="alert">
+                    <i class="bi ${icono} me-2"></i>
+                    ${texto}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+
+            $('#mensajes-container').html(alerta);
+
+            // Auto cerrar después de 5 segundos
+            setTimeout(() => {
+                $('.alert').alert('close');
+            }, 5000);
+        }
+    </script>
+}

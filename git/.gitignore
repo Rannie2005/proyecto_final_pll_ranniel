@@ -1,0 +1,30 @@
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build results
+bin/
+obj/
+
+# IIS Express
+applicationhost.config
+
+# NuGet
+*.nupkg
+packages/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# SQL local DB
+*.mdf
+*.ldf
+
+# Logs
+*.log
+
+# VSCode
+.vscode/

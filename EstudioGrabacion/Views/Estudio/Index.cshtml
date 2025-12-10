@@ -1,0 +1,120 @@
+﻿@{
+    ViewData["Title"] = "Estudio de Grabación";
+}
+
+<div class="container mt-5">
+    <h1 class="text-center mb-4">🎵 Estudio de Grabación Ranniel</h1>
+
+    <div class="row">
+        <div class="col-md-3 mb-4">
+            <div class="card text-white bg-primary">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Ingenieros</h5>
+                    <p class="card-text">Gestionar ingenieros de sonido</p>
+                    <a asp-controller="Estudio" asp-action="Ingenieros" class="btn btn-light">Ver Ingenieros</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-4">
+            <div class="card text-white bg-success">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Servicios</h5>
+                    <p class="card-text">Gestionar servicios disponibles</p>
+                    <a asp-controller="Estudio" asp-action="Servicios" class="btn btn-light">Ver Servicios</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-4">
+            <div class="card text-white bg-warning">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Sesiones</h5>
+                    <p class="card-text">Gestionar sesiones de grabación</p>
+                    <a asp-controller="Estudio" asp-action="Sesiones" class="btn btn-light">Ver Sesiones</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-4">
+            <div class="card text-white bg-info">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Paquetes</h5>
+                    <p class="card-text">Gestionar paquetes de servicios</p>
+                    <a asp-controller="Estudio" asp-action="Paquetes" class="btn btn-light">Ver Paquetes</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <h5>Próximas Sesiones</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">No hay sesiones programadas</p>
+                    <a asp-controller="Estudio" asp-action="Reservar" class="btn btn-sm btn-primary">Reservar Nueva Sesión</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <h5>Ingenieros Disponibles</h5>
+                </div>
+                <div class="card-body">
+                    <div id="ingenieros-disponibles">
+                        <p class="text-muted">Cargando ingenieros disponibles...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            cargarIngenierosDisponibles();
+        });
+
+        function cargarIngenierosDisponibles() {
+            $.ajax({
+                url: '/api/Ingenieros',
+                method: 'GET',
+                success: function(data) {
+                    mostrarIngenierosDisponibles(data);
+                },
+                error: function() {
+                    $('#ingenieros-disponibles').html('<p class="text-danger">Error al cargar ingenieros.</p>');
+                }
+            });
+        }
+
+        function mostrarIngenierosDisponibles(ingenieros) {
+            var container = $('#ingenieros-disponibles');
+            container.empty();
+
+            var disponibles = ingenieros.filter(i => i.disponible);
+
+            if (disponibles.length === 0) {
+                container.html('<p class="text-muted">No hay ingenieros disponibles en este momento.</p>');
+                return;
+            }
+
+            var html = '<ul class="list-unstyled">';
+            disponibles.forEach(function(ingeniero) {
+                html += `
+                    <li class="mb-2">
+                        <strong>${ingeniero.nombre}</strong><br>
+                        <small>${ingeniero.especialidad} - $${ingeniero.tarifaPorHora}/hora</small>
+                    </li>
+                `;
+            });
+            html += '</ul>';
+            container.html(html);
+        }
+    </script>
+}

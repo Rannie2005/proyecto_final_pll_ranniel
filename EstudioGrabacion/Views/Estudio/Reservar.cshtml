@@ -1,0 +1,757 @@
+﻿@{
+    ViewData["Title"] = "Reservar";
+    Layout = "~/Views/Shared/_Layout.cshtml"; // Ajusta según tu layout
+}
+<div class="container mt-4">
+    <h2>Reservar Nueva Sesión</h2>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-calendar-check"></i> Datos de la Reserva</h5>
+                </div>
+                <div class="card-body">
+                    <form id="formReserva">
+                        <!-- SECCIÓN DE DATOS DEL CLIENTE -->
+                        <div class="card mb-4 border-info">
+                            <div class="card-header bg-info text-white">
+                                <h6 class="mb-0"><i class="bi bi-person-badge"></i> Información del Cliente</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Nombre Completo *</label>
+                                        <input type="text" class="form-control" id="nombreCliente" required 
+                                               placeholder="Ej: Juan Pérez García">
+                                        <div class="invalid-feedback">Por favor ingrese su nombre completo.</div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Teléfono *</label>
+                                        <input type="tel" class="form-control" id="telefonoCliente" required 
+                                               placeholder="Ej: 555-1234-567">
+                                        <div class="invalid-feedback">Por favor ingrese su número de teléfono.</div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Email *</label>
+                                        <input type="email" class="form-control" id="emailCliente" required 
+                                               placeholder="ejemplo@email.com">
+                                        <div class="invalid-feedback">Por favor ingrese un email válido.</div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Dirección (Opcional)</label>
+                                        <input type="text" class="form-control" id="direccionCliente" 
+                                               placeholder="Ej: Calle Principal #123, Colonia Centro">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- FIN SECCIÓN CLIENTE -->
+
+                        <h6 class="mb-3"><i class="bi bi-calendar-event"></i> Detalles de la Sesión</h6>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Seleccionar Fecha *</label>
+                                <input type="date" class="form-control" id="fecha" required>
+                                <div class="invalid-feedback">Por favor seleccione una fecha.</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Hora de Inicio *</label>
+                                <select class="form-select" id="horaInicio" required>
+                                    <option value="">Seleccionar hora</option>
+                                    <!-- Las horas se llenarán con JavaScript -->
+                                </select>
+                                <div class="invalid-feedback">Por favor seleccione una hora.</div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Tipo de Servicio *</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="tipoServicio" id="servicioIndividual" value="individual" checked>
+                                    <label class="form-check-label" for="servicioIndividual">
+                                        Servicio Individual
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="tipoServicio" id="paquete" value="paquete">
+                                    <label class="form-check-label" for="paquete">
+                                        Paquete de Servicios
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Duración (horas) *</label>
+                                <select class="form-select" id="duracion" required>
+                                    <option value="1">1 hora</option>
+                                    <option value="2" selected>2 horas</option>
+                                    <option value="3">3 horas</option>
+                                    <option value="4">4 horas</option>
+                                    <option value="5">5 horas</option>
+                                    <option value="6">6 horas</option>
+                                    <option value="8">8 horas</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3" id="seccionServicios">
+                            <label class="form-label">Seleccionar Servicio *</label>
+                            <select class="form-select" id="servicioId">
+                                <option value="">Cargando servicios...</option>
+                            </select>
+                            <div class="invalid-feedback">Por favor seleccione un servicio.</div>
+                        </div>
+
+                        <div class="mb-3 d-none" id="seccionPaquetes">
+                            <label class="form-label">Seleccionar Paquete *</label>
+                            <select class="form-select" id="paqueteId">
+                                <option value="">Cargando paquetes...</option>
+                            </select>
+                            <div class="invalid-feedback">Por favor seleccione un paquete.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Seleccionar Ingeniero *</label>
+                            <select class="form-select" id="ingenieroId" required>
+                                <option value="">Cargando ingenieros...</option>
+                            </select>
+                            <div class="form-text">Solo se muestran ingenieros disponibles</div>
+                            <div class="invalid-feedback">Por favor seleccione un ingeniero.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Notas Adicionales (Opcional)</label>
+                            <textarea class="form-control" id="notas" rows="3" 
+                                      placeholder="Especificaciones especiales, requerimientos técnicos, equipo adicional necesario, etc."></textarea>
+                        </div>
+
+                        <div class="alert alert-info" id="resumenCosto" style="display: none;">
+                            <h6><i class="bi bi-cash-stack"></i> Resumen de Costo</h6>
+                            <p id="detalleCosto"></p>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="button" class="btn btn-secondary" onclick="calcularCosto()">
+                                <i class="bi bi-calculator"></i> Calcular Costo
+                            </button>
+                            <button type="button" class="btn btn-primary" onclick="confirmarReserva()">
+                                <i class="bi bi-check-circle"></i> Confirmar Reserva
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 mt-4 mt-lg-0">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> Información Importante</h5>
+                </div>
+                <div class="card-body">
+                    <h6>Políticas del Estudio:</h6>
+                    <ul class="small">
+                        <li>Las reservas deben confirmarse con 24 horas de anticipación</li>
+                        <li>Cancelaciones con menos de 48 horas tienen cargo del 50%</li>
+                        <li>Llegar 15 minutos antes de la sesión</li>
+                        <li>Traer material listo para grabar</li>
+                        <li>Pago al inicio de la sesión</li>
+                    </ul>
+
+                    <h6 class="mt-3">Horarios Disponibles:</h6>
+                    <p class="small">
+                        <i class="bi bi-calendar-week"></i> Lunes a Viernes: 9:00 AM - 8:00 PM<br>
+                        <i class="bi bi-calendar-day"></i> Sábados: 10:00 AM - 6:00 PM<br>
+                        <i class="bi bi-calendar-x"></i> Domingos: Cerrado
+                    </p>
+
+                    <div class="alert alert-warning mt-3 small">
+                        <i class="bi bi-exclamation-triangle"></i> <strong>Nota:</strong>
+                        Los horarios están sujetos a disponibilidad de ingenieros.
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-headphones"></i> Ingenieros Disponibles Hoy</h5>
+                </div>
+                <div class="card-body">
+                    <div id="ingenieros-hoy">
+                        <p class="text-muted"><i class="bi bi-hourglass-split"></i> Cargando...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación -->
+<div class="modal fade" id="modalConfirmacion" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="bi bi-check-circle"></i> Confirmar Reserva</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="detalle-reserva">
+                    <!-- Detalles de la reserva se cargarán aquí -->
+                </div>
+                <div class="alert alert-warning mt-3">
+                    <i class="bi bi-exclamation-triangle"></i> 
+                    <strong>Confirmación:</strong> ¿Estás seguro de crear esta reserva? Esta acción no se puede deshacer.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i> Cancelar
+                </button>
+                <button type="button" class="btn btn-success" onclick="crearReserva()">
+                    <i class="bi bi-check-circle"></i> Sí, Confirmar Reserva
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+                // Función de debug para ver los datos
+        function debugDatos() {
+            console.log("=== DEBUG DATOS ===");
+            console.log("Servicios:", servicios);
+            console.log("Paquetes:", paquetes);
+            console.log("Ingenieros:", ingenieros);
+
+            // Verificar un servicio específico
+            if (servicios.length > 0) {
+                console.log("Primer servicio:", servicios[0]);
+                console.log("Propiedades del primer servicio:", Object.keys(servicios[0]));
+            }
+        }
+        // Variables globales
+        var servicios = [];
+        var paquetes = [];
+        var ingenieros = [];
+        var reservaActual = null; // Para almacenar los datos de la reserva
+
+        $(document).ready(function() {
+            // Configurar fecha mínima (hoy) y establecer hoy como valor predeterminado
+            var today = new Date().toISOString().split('T')[0];
+            $('#fecha').attr('min', today);
+            $('#fecha').val(today);
+
+            // Cargar horas disponibles
+            cargarHorasDisponibles();
+
+            // Cargar datos
+            cargarServicios();
+            cargarPaquetes();
+            cargarIngenierosDisponibles();
+            cargarIngenierosHoy();
+
+            // Event listeners
+            $('input[name="tipoServicio"]').change(function() {
+                if ($(this).val() === 'individual') {
+                    $('#seccionServicios').removeClass('d-none');
+                    $('#seccionPaquetes').addClass('d-none');
+                    $('#servicioId').prop('required', true);
+                    $('#paqueteId').prop('required', false);
+                } else {
+                    $('#seccionServicios').addClass('d-none');
+                    $('#seccionPaquetes').removeClass('d-none');
+                    $('#servicioId').prop('required', false);
+                    $('#paqueteId').prop('required', true);
+                }
+                calcularCosto();
+            });
+
+            $('#servicioId, #paqueteId, #ingenieroId, #duracion').change(function() {
+                calcularCosto();
+            });
+
+            // Validación en tiempo real
+            $('#nombreCliente, #telefonoCliente, #emailCliente').on('input', function() {
+                validarCampo($(this));
+            });
+        });
+
+        function cargarHorasDisponibles() {
+            var select = $('#horaInicio');
+            select.empty();
+            select.append('<option value="">Seleccionar hora</option>');
+
+            // Horarios del estudio (9:00 AM a 8:00 PM)
+            var horas = [];
+            for (var i = 9; i <= 20; i++) {
+                var hora = i < 10 ? '0' + i : i;
+                horas.push(hora + ':00');
+                if (i < 20) horas.push(hora + ':30');
+            }
+
+            horas.forEach(function(hora) {
+                var horaDisplay = hora;
+                if (parseInt(hora) < 12) {
+                    horaDisplay += ' AM';
+                } else if (parseInt(hora) === 12) {
+                    horaDisplay += ' PM';
+                } else {
+                    horaDisplay = (parseInt(hora) - 12) + hora.substring(2) + ' PM';
+                }
+                select.append('<option value="' + hora + '">' + horaDisplay + '</option>');
+            });
+        }
+
+                function cargarServicios() {
+            console.log("Cargando servicios...");
+
+            $.ajax({
+                url: '/api/Servicios',
+                method: 'GET',
+                success: function(data) {
+                    console.log("Servicios recibidos:", data);
+                    servicios = data;
+                    var select = $('#servicioId');
+                    select.empty();
+                    select.append('<option value="">Seleccionar servicio</option>');
+
+                    // Verificar la estructura de los datos
+                    if (data && data.length > 0) {
+                        data.forEach(function(servicio) {
+                            console.log("Servicio:", servicio);
+                            var nombre = servicio.nombre || servicio.Nombre || 'Sin nombre';
+                            var precio = servicio.precio || servicio.Precio || 0;
+                            var duracion = servicio.duracionHoras || servicio.DuracionHoras || 1;
+                            var id = servicio.id || servicio.Id;
+
+                            select.append('<option value="' + id + '">' +
+                                         nombre + ' - $' + precio + ' (' + duracion + ' horas)</option>');
+                        });
+
+                        // Seleccionar el primer servicio por defecto
+                        if (data[0].id || data[0].Id) {
+                            $('#servicioId').val(data[0].id || data[0].Id);
+                            calcularCosto();
+                        }
+                    } else {
+                        console.warn("No hay servicios disponibles");
+                        select.append('<option value="">No hay servicios disponibles</option>');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error cargando servicios:', xhr);
+                    $('#servicioId').html('<option value="">Error cargando servicios</option>');
+
+                    // Intentar cargar de otra manera
+                    setTimeout(cargarServicios, 2000); // Reintentar después de 2 segundos
+                }
+            });
+        }
+
+        function cargarPaquetes() {
+            $.ajax({
+                url: '/api/Paquetes',
+                method: 'GET',
+                success: function(data) {
+                    paquetes = data.filter(p => p.activo);
+                    var select = $('#paqueteId');
+                    select.empty();
+                    select.append('<option value="">Seleccionar paquete</option>');
+                    paquetes.forEach(function(paquete) {
+                        select.append('<option value="' + paquete.id + '">' + 
+                                     paquete.nombre + ' - $' + paquete.precioTotal + '</option>');
+                    });
+                },
+                error: function(xhr) {
+                    console.error('Error cargando paquetes:', xhr);
+                    $('#paqueteId').html('<option value="">Error cargando paquetes</option>');
+                }
+            });
+        }
+
+        function cargarIngenierosDisponibles() {
+            $.ajax({
+                url: '/api/Ingenieros',
+                method: 'GET',
+                success: function(data) {
+                    ingenieros = data;
+                    var select = $('#ingenieroId');
+                    select.empty();
+                    select.append('<option value="">Seleccionar ingeniero</option>');
+                    data.filter(i => i.disponible).forEach(function(ingeniero) {
+                        select.append('<option value="' + ingeniero.id + '">' + 
+                                     ingeniero.nombre + ' - ' + ingeniero.especialidad + 
+                                     ' ($' + ingeniero.tarifaPorHora + '/hora)</option>');
+                    });
+                },
+                error: function(xhr) {
+                    console.error('Error cargando ingenieros:', xhr);
+                    $('#ingenieroId').html('<option value="">Error cargando ingenieros</option>');
+                    mostrarMensaje('error', 'Error al cargar los ingenieros. Intente recargar la página.');
+                }
+            });
+        }
+
+        function cargarIngenierosHoy() {
+            $.ajax({
+                url: '/api/Ingenieros',
+                method: 'GET',
+                success: function(data) {
+                    var container = $('#ingenieros-hoy');
+                    container.empty();
+
+                    var disponibles = data.filter(i => i.disponible);
+
+                    if (disponibles.length === 0) {
+                        container.html('<p class="text-muted"><i class="bi bi-people"></i> No hay ingenieros disponibles hoy.</p>');
+                        return;
+                    }
+
+                    disponibles.forEach(function(ingeniero) {
+                        var item = `
+                            <div class="d-flex align-items-start mb-3">
+                                <div class="flex-shrink-0">
+                                    <div class="rounded-circle bg-primary bg-opacity-10 p-2">
+                                        <i class="bi bi-person-workspace fs-4 text-primary"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="mb-1">${ingeniero.nombre}</h6>
+                                    <p class="mb-1 small text-muted">
+                                        <i class="bi bi-gear"></i> ${ingeniero.especialidad}
+                                    </p>
+                                    <p class="mb-0 small">
+                                        <i class="bi bi-cash"></i> <strong>$${ingeniero.tarifaPorHora}/hora</strong>
+                                    </p>
+                                </div>
+                            </div>
+                        `;
+                        container.append(item);
+                    });
+                },
+                error: function() {
+                    $('#ingenieros-hoy').html('<p class="text-danger"><i class="bi bi-exclamation-triangle"></i> Error cargando ingenieros</p>');
+                }
+            });
+        }
+
+        function calcularCosto() {
+            var tipoServicio = $('input[name="tipoServicio"]:checked').val();
+            var servicioId = $('#servicioId').val();
+            var paqueteId = $('#paqueteId').val();
+            var ingenieroId = $('#ingenieroId').val();
+            var duracion = parseInt($('#duracion').val());
+
+            var costoTotal = 0;
+            var detalle = '';
+
+            if (!ingenieroId) {
+                $('#resumenCosto').hide();
+                return;
+            }
+
+            var ingeniero = ingenieros.find(i => i.id == ingenieroId);
+            var costoIngeniero = ingeniero ? ingeniero.tarifaPorHora * duracion : 0;
+
+            if (tipoServicio === 'individual' && servicioId) {
+                var servicio = servicios.find(s => s.id == servicioId);
+                if (servicio) {
+                    costoTotal = costoIngeniero + servicio.precio;
+                    detalle = `
+                        <div class="mb-2">
+                            <strong><i class="bi bi-mic"></i> Servicio:</strong> ${servicio.nombre}<br>
+                            <strong><i class="bi bi-cash"></i> Costo servicio:</strong> $${servicio.precio.toFixed(2)}
+                        </div>
+                        <div class="mb-2">
+                            <strong><i class="bi bi-person-workspace"></i> Ingeniero (${duracion} horas):</strong> $${costoIngeniero.toFixed(2)}
+                        </div>
+                        <hr>
+                        <div class="mt-2">
+                            <strong><i class="bi bi-credit-card"></i> TOTAL A PAGAR:</strong> <span class="text-success fw-bold">$${costoTotal.toFixed(2)}</span>
+                        </div>
+                    `;
+                }
+            } else if (tipoServicio === 'paquete' && paqueteId) {
+                var paquete = paquetes.find(p => p.id == paqueteId);
+                if (paquete) {
+                    costoTotal = costoIngeniero + paquete.precioTotal;
+                    detalle = `
+                        <div class="mb-2">
+                            <strong><i class="bi bi-box-seam"></i> Paquete:</strong> ${paquete.nombre}<br>
+                            <strong><i class="bi bi-cash"></i> Costo paquete:</strong> $${paquete.precioTotal.toFixed(2)}
+                        </div>
+                        <div class="mb-2">
+                            <strong><i class="bi bi-person-workspace"></i> Ingeniero (${duracion} horas):</strong> $${costoIngeniero.toFixed(2)}
+                        </div>
+                        <hr>
+                        <div class="mt-2">
+                            <strong><i class="bi bi-credit-card"></i> TOTAL A PAGAR:</strong> <span class="text-success fw-bold">$${costoTotal.toFixed(2)}</span>
+                        </div>
+                    `;
+                }
+            }
+
+            if (costoTotal > 0) {
+                $('#detalleCosto').html(detalle);
+                $('#resumenCosto').show();
+            } else {
+                $('#resumenCosto').hide();
+            }
+        }
+
+        function validarCampo(campo) {
+            if (campo.val().trim() === '') {
+                campo.addClass('is-invalid');
+                campo.removeClass('is-valid');
+                return false;
+            } else {
+                campo.removeClass('is-invalid');
+                campo.addClass('is-valid');
+                return true;
+            }
+        }
+
+        function validarEmail(email) {
+            var emailRegex = /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/;
+            return emailRegex.test(email);
+        }
+
+        function confirmarReserva() {
+            console.log("=== INICIANDO CONFIRMACIÓN DE RESERVA ===");
+
+            // 1. VALIDAR DATOS DEL CLIENTE
+            var nombreCliente = $('#nombreCliente').val().trim();
+            var telefonoCliente = $('#telefonoCliente').val().trim();
+            var emailCliente = $('#emailCliente').val().trim();
+            var direccionCliente = $('#direccionCliente').val().trim();
+
+            // Validar campos requeridos del cliente
+            if (!nombreCliente) {
+                mostrarMensaje('error', 'Por favor ingrese el nombre del cliente.');
+                $('#nombreCliente').addClass('is-invalid').focus();
+                return;
+            }
+
+            if (!telefonoCliente) {
+                mostrarMensaje('error', 'Por favor ingrese el teléfono del cliente.');
+                $('#telefonoCliente').addClass('is-invalid').focus();
+                return;
+            }
+
+            if (!emailCliente) {
+                mostrarMensaje('error', 'Por favor ingrese el email del cliente.');
+                $('#emailCliente').addClass('is-invalid').focus();
+                return;
+            }
+
+            if (!validarEmail(emailCliente)) {
+                mostrarMensaje('error', 'Por favor ingrese un email válido.');
+                $('#emailCliente').addClass('is-invalid').focus();
+                return;
+            }
+
+            // 2. VALIDAR DATOS DE LA SESIÓN
+            var fecha = $('#fecha').val();
+            var horaInicio = $('#horaInicio').val();
+            var tipoServicio = $('input[name="tipoServicio"]:checked').val();
+            var servicioId = $('#servicioId').val();
+            var paqueteId = $('#paqueteId').val();
+            var ingenieroId = $('#ingenieroId').val();
+            var duracion = parseInt($('#duracion').val());
+            var notas = $('#notas').val();
+
+            if (!fecha) {
+                mostrarMensaje('error', 'Por favor seleccione una fecha.');
+                $('#fecha').addClass('is-invalid').focus();
+                return;
+            }
+
+            if (!horaInicio) {
+                mostrarMensaje('error', 'Por favor seleccione una hora de inicio.');
+                $('#horaInicio').addClass('is-invalid').focus();
+                return;
+            }
+
+            if (!ingenieroId) {
+                mostrarMensaje('error', 'Por favor seleccione un ingeniero.');
+                $('#ingenieroId').addClass('is-invalid').focus();
+                return;
+            }
+
+            if (tipoServicio === 'individual' && !servicioId) {
+                mostrarMensaje('error', 'Por favor seleccione un servicio.');
+                $('#servicioId').addClass('is-invalid').focus();
+                return;
+            }
+
+            if (tipoServicio === 'paquete' && !paqueteId) {
+                mostrarMensaje('error', 'Por favor seleccione un paquete.');
+                $('#paqueteId').addClass('is-invalid').focus();
+                return;
+            }
+
+            // 3. CALCULAR FECHAS
+            var fechaHoraInicio = new Date(fecha + ' ' + horaInicio);
+            var fechaHoraFin = new Date(fechaHoraInicio.getTime() + (duracion * 60 * 60 * 1000));
+
+            // 4. CALCULAR COSTO
+            var costoTotal = 0;
+            var ingeniero = ingenieros.find(i => i.id == ingenieroId);
+            var costoIngeniero = ingeniero ? ingeniero.tarifaPorHora * duracion : 0;
+            var servicioReservaId = servicioId;
+
+            if (tipoServicio === 'individual') {
+                var servicio = servicios.find(s => s.id == servicioId);
+                costoTotal = costoIngeniero + (servicio ? servicio.precio : 0);
+            } else {
+                var paquete = paquetes.find(p => p.id == paqueteId);
+                costoTotal = costoIngeniero + (paquete ? paquete.precioTotal : 0);
+                // Para paquetes, usar el servicio principal (asumimos que hay al menos uno)
+                servicioReservaId = paquete && paquete.servicios && paquete.servicios.length > 0 
+                    ? paquete.servicios[0].id 
+                    : servicioId;
+            }
+
+            // 5. PREPARAR OBJETO RESERVA PARA ENVÍO
+            reservaActual = {
+                fechaHoraInicio: fechaHoraInicio.toISOString(),
+                fechaHoraFin: fechaHoraFin.toISOString(),
+                costoTotal: costoTotal,
+                estado: "Pendiente",
+                notas: notas || null,
+                // DATOS DEL CLIENTE - ¡IMPORTANTE!
+                nombreCliente: nombreCliente,
+                telefonoCliente: telefonoCliente,
+                emailCliente: emailCliente,
+                direccionCliente: direccionCliente || null,
+                usuarioId: "", // Se llenará en el backend
+                ingenieroId: parseInt(ingenieroId),
+                servicioId: parseInt(servicioReservaId)
+            };
+
+            console.log("Reserva preparada:", reservaActual);
+
+            // 6. MOSTRAR RESUMEN EN MODAL
+            var servicioNombre = tipoServicio === 'individual' 
+                ? servicios.find(s => s.id == servicioId)?.nombre 
+                : paquetes.find(p => p.id == paqueteId)?.nombre;
+
+            var resumen = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-person-badge"></i> Información del Cliente:</h6>
+                        <p><strong>Nombre:</strong> ${nombreCliente}</p>
+                        <p><strong>Teléfono:</strong> ${telefonoCliente}</p>
+                        <p><strong>Email:</strong> ${emailCliente}</p>
+                        ${direccionCliente ? `<p><strong>Dirección:</strong> ${direccionCliente}</p>` : ''}
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-calendar-event"></i> Detalles de la Sesión:</h6>
+                        <p><strong>Fecha:</strong> ${fechaHoraInicio.toLocaleDateString('es-MX')}</p>
+                        <p><strong>Horario:</strong> ${fechaHoraInicio.toLocaleTimeString('es-MX', {hour: '2-digit', minute:'2-digit'})} - ${fechaHoraFin.toLocaleTimeString('es-MX', {hour: '2-digit', minute:'2-digit'})}</p>
+                        <p><strong>Ingeniero:</strong> ${ingeniero.nombre}</p>
+                        <p><strong>${tipoServicio === 'individual' ? 'Servicio' : 'Paquete'}:</strong> ${servicioNombre}</p>
+                        <p><strong>Duración:</strong> ${duracion} horas</p>
+                        <p><strong>Costo Total:</strong> <span class="text-success fw-bold">$${costoTotal.toFixed(2)}</span></p>
+                    </div>
+                </div>
+                ${notas ? '<hr><p><strong><i class="bi bi-chat-text"></i> Notas:</strong><br>' + notas + '</p>' : ''}
+            `;
+
+            $('#detalle-reserva').html(resumen);
+            $('#modalConfirmacion').modal('show');
+        }
+
+        function crearReserva() {
+            if (!reservaActual) {
+                mostrarMensaje('error', 'No hay datos de reserva para enviar. Por favor, complete el formulario nuevamente.');
+                return;
+            }
+
+            console.log("Enviando reserva al servidor:", reservaActual);
+
+            $.ajax({
+                url: '/api/Sesiones',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(reservaActual),
+                beforeSend: function() {
+                    // Mostrar indicador de carga
+                    $('#modalConfirmacion .modal-footer button').prop('disabled', true);
+                    $('#modalConfirmacion .btn-success').html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Procesando...');
+                },
+                success: function(data) {
+                    console.log("Reserva creada exitosamente:", data);
+                    $('#modalConfirmacion').modal('hide');
+                    
+                    // Resetear formulario
+                    $('#formReserva')[0].reset();
+                    $('#formReserva input').removeClass('is-valid is-invalid');
+                    reservaActual = null;
+                    
+                    mostrarMensaje('success', 
+                        '<i class="bi bi-check-circle-fill"></i> ¡Reserva creada exitosamente!<br>' +
+                        'Se ha enviado un correo de confirmación al cliente. Redirigiendo a la lista de sesiones...');
+                    
+                    // Redirigir después de 3 segundos
+                    setTimeout(function() {
+                        window.location.href = '/Estudio/Sesiones';
+                    }, 3000);
+                },
+                error: function(xhr) {
+                    console.error("Error en la reserva:", xhr);
+                    
+                    $('#modalConfirmacion .modal-footer button').prop('disabled', false);
+                    $('#modalConfirmacion .btn-success').html('<i class="bi bi-check-circle"></i> Sí, Confirmar Reserva');
+                    
+                    var errorMsg = 'Error al crear la reserva: ';
+                    
+                    if (xhr.responseJSON) {
+                        if (typeof xhr.responseJSON === 'string') {
+                            errorMsg += xhr.responseJSON;
+                        } else if (xhr.responseJSON.message) {
+                            errorMsg += xhr.responseJSON.message;
+                        } else {
+                            errorMsg += JSON.stringify(xhr.responseJSON);
+                        }
+                    } else if (xhr.responseText) {
+                        errorMsg += xhr.responseText;
+                    } else if (xhr.status === 0) {
+                        errorMsg += 'No se pudo conectar con el servidor. Verifique su conexión a internet.';
+                    } else {
+                        errorMsg += 'Error desconocido. Código: ' + xhr.status;
+                    }
+                    
+                    mostrarMensaje('error', errorMsg);
+                    $('#modalConfirmacion').modal('hide');
+                }
+            });
+        }
+
+        function mostrarMensaje(tipo, texto) {
+            // Remover mensajes anteriores
+            $('.alert-dismissible').remove();
+            
+            var icon = tipo === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill';
+            var alerta = `
+                <div class="alert alert-${tipo} alert-dismissible fade show mt-3" role="alert">
+                    <i class="bi ${icon}"></i>
+                    ${texto}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            $('.container').prepend(alerta);
+            
+            // Auto cerrar después de 7 segundos si es éxito, 10 si es error
+            setTimeout(() => {
+                $('.alert').alert('close');
+            }, tipo === 'success' ? 7000 : 10000);
+        }
+    </script>
+}
